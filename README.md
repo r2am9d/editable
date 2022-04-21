@@ -59,8 +59,8 @@ To create a new table, use the `Editable()` widget class and provide the table d
      example:
      ```dart 
      List cols = [
-       {"title":'Name', 'widthFactor': 0.2, 'key':'name'},
-       {"title":'Date', 'widthFactor': 0.1, 'key':'date'},
+       {"title":'Name', 'widthFactor': 0.2, 'key':'name', 'editable': false},
+       {"title":'Date', 'widthFactor': 0.1, 'key':'date', 'editable': false},
        {"title":'Month', 'widthFactor': 0.1, 'key':'month'},
        {"title":'Status',  'key':'status'},
      ]; 
@@ -73,7 +73,11 @@ To create a new table, use the `Editable()` widget class and provide the table d
       'widthFactor': 0.2 //gives 20% of screen size to the column
       ```
     
-     [key] an identifyer preferably without space and special characters
+     [key] an identifier preferably without space and special characters
+
+     [editable] specify if this column can be edited or not
+
+     [type] Either "numeric" or "text". Identifier which type will be applied to the current row Defaults to "text"
 
 - `rows`: an array of objects, where each object key represents a column [key],
   example:
@@ -143,6 +147,12 @@ To create a new table, use the `Editable()` widget class and provide the table d
  
 - `onRowSaved`: [onRowSaved] callback is triggered when a [saveButton] is pressed.
    returns only values if row is edited, otherwise returns a string ['no edit']
+
+- `onRowAdded`: [onRowAdded] callback is triggered when [createRow] function has beed called.
+   returns the item currently being added from the table
+
+- `onRowRemoved`: [onRowRemoved] callback is triggered when [removeOneRow] function has beed called.
+   returns the item being removed from the table
 
 - `EditableState` key: To get all Edited Rows outside the current context, you can access the editable state using a GlobalKey,
   example:
