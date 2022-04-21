@@ -13,7 +13,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         primaryColor: Colors.blue,
-        accentColor: Colors.white,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(title: 'Editable example'),
@@ -22,7 +21,10 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  const MyHomePage({
+    Key key,
+    this.title,
+  }) : super(key: key);
 
   final String title;
 
@@ -110,8 +112,8 @@ class _MyHomePageState extends State<MyHomePage> {
         columns: cols,
         rows: rows,
         zebraStripe: true,
-        stripeColor1: Colors.blue[50],
-        stripeColor2: Colors.grey[200],
+        stripeColor1: Colors.blue.shade50,
+        stripeColor2: Colors.grey.shade200,
         onRowSaved: (value) {
           print(value);
         },

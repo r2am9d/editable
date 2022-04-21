@@ -23,22 +23,37 @@ rowBlueprint(int rowCount, columns, rows) {
   return rows;
 }
 
-/// adds a row to existing row lists
-addOneRow(columns, rows) {
+/// Adds a row to existing row list
+addOneRow({columns, rows, row, cb}) {
   var item = {};
-  columns.forEach((element) {
-    item[element['key']] = '';
-  });
+  if (row == null) {
+    columns.forEach((element) {
+      item[element['key']] = '';
+    });
+  } else {
+    item = row;
+  }
+
   rows.add(item);
+
+  // Callback fn
+  if (cb != null) cb(item);
+
   return rows;
 }
 
-removeOneRow(columns, rows, rowToDelete) {
-  rows.remove(rowToDelete);
+/// Removes a row to existing row list
+removeOneRow({columns, rows, row, cb}) {
+  var item = row;
+  rows.remove(item);
+
+  // Callback fn
+  if (cb != null) cb(item);
+
   return rows;
 }
 
-///Create an empty column for saveIcon
+/// Create an empty column for saveIcon
 Widget iconColumn(showSaveIcon, thPaddingTop, thPaddingBottom) {
   return Visibility(
     visible: showSaveIcon,

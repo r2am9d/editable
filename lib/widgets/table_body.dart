@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RowBuilder extends StatefulWidget {
   ///Builds row elements for the table
@@ -22,11 +23,12 @@ class RowBuilder extends StatefulWidget {
     required this.onChanged,
     required this.widthRatio,
     required this.isEditable,
+    required this.inputType,
     required this.stripeColor1,
     required this.stripeColor2,
     required this.zebraStripe,
     required this.focusedBorder,
-  })   : _trHeight = trHeight,
+  })  : _trHeight = trHeight,
         _borderColor = borderColor,
         _borderWidth = borderWidth,
         super(key: key);
@@ -38,6 +40,7 @@ class RowBuilder extends StatefulWidget {
   final cellData;
   final double? widthRatio;
   final bool isEditable;
+  final String inputType;
   final TextAlign tdAlignment;
   final TextStyle? tdStyle;
   final int index;
@@ -61,7 +64,9 @@ class RowBuilder extends StatefulWidget {
 class _RowBuilderState extends State<RowBuilder> {
   @override
   Widget build(BuildContext context) {
+    bool isText = widget.inputType == 'text';
     double width = MediaQuery.of(context).size.width;
+
     return Flexible(
       fit: FlexFit.loose,
       flex: 6,
@@ -69,34 +74,46 @@ class _RowBuilderState extends State<RowBuilder> {
         height: widget._trHeight < 40 ? 40 : widget._trHeight,
         width: width * widget.widthRatio!,
         decoration: BoxDecoration(
-            color: !widget.zebraStripe
-                ? null
-                : (widget.index % 2 == 1.0
-                    ? widget.stripeColor2
-                    : widget.stripeColor1),
-            border: Border.all(
-                color: widget._borderColor, width: widget._borderWidth)),
+          color: !widget.zebraStripe
+              ? null
+              : (widget.index % 2 == 1.0
+                  ? widget.stripeColor2
+                  : widget.stripeColor1),
+          border: Border.all(
+            color: widget._borderColor,
+            width: widget._borderWidth,
+          ),
+        ),
         child: widget.isEditable
-            ? TextFormField(
-                textAlign: widget.tdAlignment,
-                style: widget.tdStyle,
-                initialValue: widget.cellData.toString(),
-                onFieldSubmitted: widget.onSubmitted,
-                onChanged: widget.onChanged,
-                textAlignVertical: TextAlignVertical.center,
-                maxLines: widget.tdEditableMaxLines,
-                decoration: InputDecoration(
-                  filled: widget.zebraStripe,
-                  fillColor: widget.index % 2 == 1.0
-                      ? widget.stripeColor2
-                      : widget.stripeColor1,
-                  contentPadding: EdgeInsets.only(
+            ? Container(
+                alignment: Alignment.centerLeft,
+                child: TextFormField(
+                  keyboardType:
+                      isText ? TextInputType.text : TextInputType.number,
+                  inputFormatters:
+                      isText ? [] : [FilteringTextInputFormatter.digitsOnly],
+                  textInputAction: TextInputAction.done,
+                  textAlign: widget.tdAlignment,
+                  style: widget.tdStyle,
+                  initialValue: widget.cellData.toString(),
+                  onFieldSubmitted: widget.onSubmitted,
+                  onChanged: widget.onChanged,
+                  textAlignVertical: TextAlignVertical.center,
+                  maxLines: widget.tdEditableMaxLines,
+                  decoration: InputDecoration(
+                    filled: widget.zebraStripe,
+                    fillColor: widget.index % 2 == 1.0
+                        ? widget.stripeColor2
+                        : widget.stripeColor1,
+                    contentPadding: EdgeInsets.only(
                       left: widget.tdPaddingLeft,
                       right: widget.tdPaddingRight,
                       top: widget.tdPaddingTop,
-                      bottom: widget.tdPaddingBottom),
-                  border: InputBorder.none,
-                  focusedBorder: widget.focusedBorder,
+                      bottom: widget.tdPaddingBottom,
+                    ),
+                    border: InputBorder.none,
+                    focusedBorder: widget.focusedBorder,
+                  ),
                 ),
               )
             : Container(
@@ -117,10 +134,7 @@ class _RowBuilderState extends State<RowBuilder> {
                 child: Text(
                   widget.cellData.toString(),
                   textAlign: widget.tdAlignment,
-                  style: widget.tdStyle ??
-                      TextStyle(
-                          // fontSize: Theme.of(context).textTheme.bodyText1.fontSize), // returns 14?
-                          fontSize: 16),
+                  style: widget.tdStyle ?? TextStyle(fontSize: 16),
                 ),
               ),
       ),

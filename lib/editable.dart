@@ -51,6 +51,8 @@ class Editable extends StatefulWidget {
       this.columnRatio = 0.20,
       this.onSubmitted,
       this.onRowSaved,
+      this.onRowAdded,
+      this.onRowRemoved,
       this.columnCount = 0,
       this.rowCount = 0,
       this.borderColor = Colors.grey,
@@ -292,12 +294,18 @@ class Editable extends StatefulWidget {
   /// returns only values if row is edited, otherwise returns a string ['no edit']
   final ValueChanged<dynamic>? onRowSaved;
 
+  // Additional Callback
+
+  final ValueChanged<dynamic>? onRowAdded;
+  final ValueChanged<dynamic>? onRowRemoved;
+
   @override
   EditableState createState() => EditableState(
-      rows: this.rows,
-      columns: this.columns,
-      rowCount: this.rowCount,
-      columnCount: this.columnCount);
+        rows: this.rows,
+        columns: this.columns,
+        rowCount: this.rowCount,
+        columnCount: this.columnCount,
+      );
 }
 
 class EditableState extends State<Editable> {
@@ -309,11 +317,26 @@ class EditableState extends State<Editable> {
   List get editedRows => _editedRows;
 
   ///Create a row after the last row
-  createRow() => addOneRow(columns, rows);
+  createRow([Map<String, dynamic>? row]) => addOneRow(
+        rows: rows,
+        columns: columns,
+        row: row,
+        cb: widget.onRowAdded,
+      );
   EditableState({this.rows, this.columns, this.columnCount, this.rowCount});
 
   /// Temporarily holds all edited rows
   List _editedRows = [];
+
+  bool _isNumeric(value) {
+    // ignore: unnecessary_null_comparison
+    if (value == null) return false;
+    return double.tryParse(value) != null;
+  }
+
+  dynamic _parseValue(value) {
+    return _isNumeric(value) ? int.parse(value) : value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +348,6 @@ class EditableState extends State<Editable> {
     rows = rows ?? rowBlueprint(rowCount!, columns, rows);
 
     /// Builds save snd remove Icons widget
-
 
     Widget _removeSaveIcons(index) {
       return Row(
@@ -345,7 +367,12 @@ class EditableState extends State<Editable> {
                   rowCount = rowCount! - 1;
 
                   setState(() {
-                    rows = removeOneRow(columns, rows, rows![index]);
+                    rows = removeOneRow(
+                      columns: columns,
+                      rows: rows,
+                      row: rows![index],
+                      cb: widget.onRowRemoved,
+                    );
                   });
                 },
               ),
@@ -411,10 +438,13 @@ class EditableState extends State<Editable> {
             var ckeys = [];
             var cwidths = [];
             var ceditable = <bool>[];
+            var ctype = [];
+
             columns!.forEach((e) {
               ckeys.add(e['key']);
               cwidths.add(e['widthFactor'] ?? widget.columnRatio);
               ceditable.add(e['editable'] ?? true);
+              ctype.add(e['type'] ?? 'text');
             });
             var list = rows![index];
             return columnCount! + 1 == (rowIndex + 1)
@@ -436,25 +466,48 @@ class EditableState extends State<Editable> {
                     onSubmitted: widget.onSubmitted,
                     widthRatio: cwidths[rowIndex].toDouble(),
                     isEditable: ceditable[rowIndex],
+                    inputType: ctype[rowIndex],
                     zebraStripe: widget.zebraStripe,
                     focusedBorder: widget.focusedBorder,
                     stripeColor1: widget.stripeColor1,
                     stripeColor2: widget.stripeColor2,
                     onChanged: (value) {
-                      ///checks if row has been edited previously
-                      var result = editedRows.indexWhere((element) {
+                      final eRows = editedRows;
+                      final iType = ctype[rowIndex];
+
+                      /// Checks if row has been edited previously
+                      var result = eRows.indexWhere((element) {
                         return element['row'] != index ? false : true;
                       });
 
-                      ///adds a new edited data to a temporary holder
+                      /// Adds a new edited data to a temporary holder
                       if (result != -1) {
-                        editedRows[result][ckeys[rowIndex]] = value;
+                        eRows[result][ckeys[rowIndex]] = value;
                       } else {
                         var temp = {};
                         temp['row'] = index;
                         temp[ckeys[rowIndex]] = value;
-                        editedRows.add(temp);
+                        eRows.add(temp);
                       }
+
+                      eRows.forEach((eRow) {
+                        // Set element
+                        final _el = rows![eRow['row']];
+
+                        // Get keys and remove first key 'row'
+                        final _keys = eRow.keys.toList();
+                        _keys.removeAt(0);
+
+                        // Map new values
+                        _keys.forEach((key) {
+                          var _val = _parseValue(eRow[key]);
+                          if (iType == 'numeric' && _val == '') {
+                            _val = 0;
+                          }
+
+                          _el[key] = _val;
+                        });
+                      });
                     },
                   );
           }),
@@ -506,7 +559,11 @@ class EditableState extends State<Editable> {
         padding: EdgeInsets.only(left: 4.0, bottom: 4),
         child: InkWell(
           onTap: () {
-            rows = addOneRow(columns, rows);
+            rows = addOneRow(
+              rows: rows,
+              columns: columns,
+              cb: widget.onRowAdded,
+            );
             rowCount = rowCount! + 1;
             setState(() {});
           },
